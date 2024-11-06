@@ -59,3 +59,20 @@ func ParseData(data interface{}) io.Reader {
 	}
 	return strings.NewReader(string(buffer))
 }
+
+func IfSlashPrefixString(s string) string {
+	if s == "" {
+		return s
+	}
+	s = strings.TrimSuffix(s, "/")
+	if strings.HasPrefix(s, "/") {
+		return ToFormat(s)
+	}
+	return "/" + ToFormat(s)
+}
+
+// ToFormat takes a string and returns a formatted string. The string is
+// converted to lowercase and spaces are removed.
+func ToFormat(s string) string {
+	return strings.ReplaceAll(s, " ", "")
+}
