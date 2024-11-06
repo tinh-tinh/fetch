@@ -1,8 +1,7 @@
 package fetch
 
-type Response[M any] struct {
-	Data       M
-	DataRaw    []byte
+type Response struct {
+	Data       interface{}
 	Status     int
 	StatusText string
 	Error      error

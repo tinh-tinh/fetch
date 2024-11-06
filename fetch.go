@@ -9,31 +9,31 @@ import (
 	"github.com/tinh-tinh/tinhtinh/core"
 )
 
-type Fetch[M any] struct {
+type Fetch struct {
+	schema   interface{}
 	Config   *Config
-	Response Response[M]
+	Response Response
 }
 
-func Create(config *Config) *Fetch[any] {
-	return &Fetch[any]{
+func Create(config *Config) *Fetch {
+	return &Fetch{
 		Config: config,
 	}
 }
 
-func CreateSchema[M any](config *Config) *Fetch[M] {
-	return &Fetch[M]{
-		Config: config,
-	}
+func (f *Fetch) Schema(data interface{}) *Fetch {
+	f.schema = data
+	return f
 }
 
-func (f *Fetch[M]) Get(url string, params ...interface{}) (*Response[M], error) {
+func (f *Fetch) Get(url string, params ...interface{}) (*Response, error) {
 	if len(params) > 0 {
 		url += "?" + ParseQuery(params)
 	}
 	return f.do("GET", url, nil)
 }
 
-func (f *Fetch[M]) Post(url string, data interface{}, params ...interface{}) (*Response[M], error) {
+func (f *Fetch) Post(url string, data interface{}, params ...interface{}) (*Response, error) {
 	if len(params) > 0 {
 		url += "?" + ParseQuery(params)
 	}
@@ -41,7 +41,7 @@ func (f *Fetch[M]) Post(url string, data interface{}, params ...interface{}) (*R
 	return f.do("POST", url, ParseData(data))
 }
 
-func (f *Fetch[M]) Patch(url string, data interface{}, params ...interface{}) (*Response[M], error) {
+func (f *Fetch) Patch(url string, data interface{}, params ...interface{}) (*Response, error) {
 	if len(params) > 0 {
 		url += "?" + ParseQuery(params)
 	}
@@ -49,7 +49,7 @@ func (f *Fetch[M]) Patch(url string, data interface{}, params ...interface{}) (*
 	return f.do("PATCH", url, ParseData(data))
 }
 
-func (f *Fetch[M]) Put(url string, data interface{}, params ...interface{}) (*Response[M], error) {
+func (f *Fetch) Put(url string, data interface{}, params ...interface{}) (*Response, error) {
 	if len(params) > 0 {
 		url += "?" + ParseQuery(params)
 	}
@@ -57,14 +57,14 @@ func (f *Fetch[M]) Put(url string, data interface{}, params ...interface{}) (*Re
 	return f.do("PUT", url, ParseData(data))
 }
 
-func (f *Fetch[M]) Delete(url string, params ...interface{}) (*Response[M], error) {
+func (f *Fetch) Delete(url string, params ...interface{}) (*Response, error) {
 	if len(params) > 0 {
 		url += "?" + ParseQuery(params)
 	}
 	return f.do("GET", url, nil)
 }
 
-func (f *Fetch[M]) do(method string, uri string, input io.Reader) (*Response[M], error) {
+func (f *Fetch) do(method string, uri string, input io.Reader) (*Response, error) {
 	var fullUrl string
 	if f.Config != nil {
 		fullUrl = f.Config.BaseUrl
@@ -94,7 +94,7 @@ func (f *Fetch[M]) do(method string, uri string, input io.Reader) (*Response[M],
 
 	client := http.Client{}
 
-	response := &Response[M]{}
+	response := &Response{}
 	resp, err := client.Do(req)
 	if err != nil {
 		response.Error = err
@@ -110,15 +110,20 @@ func (f *Fetch[M]) do(method string, uri string, input io.Reader) (*Response[M],
 		return response, nil
 	}
 
-	var data M
-
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		response.Error = err
+	if f.schema != nil {
+		data := f.schema
+		err = json.Unmarshal(body, data)
+		if err != nil {
+			response.Error = err
+			return response, nil
+		}
+		f.schema = nil
+		response.Data = data
+		response.Error = nil
 		return response, nil
 	}
 
-	response.Data = data
+	response.Data = body
 	response.Error = nil
 	return response, nil
 }
