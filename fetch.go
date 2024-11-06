@@ -5,8 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	"github.com/tinh-tinh/tinhtinh/core"
 )
 
 type Fetch struct {
@@ -70,9 +68,8 @@ func (f *Fetch) do(method string, uri string, input io.Reader) (*Response, error
 		fullUrl = f.Config.BaseUrl
 	}
 
-	fullUrl += core.IfSlashPrefixString(uri)
-
-	_, err := url.ParseRequestURI(uri)
+	fullUrl += IfSlashPrefixString(uri)
+	_, err := url.ParseRequestURI(fullUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +90,10 @@ func (f *Fetch) do(method string, uri string, input io.Reader) (*Response, error
 	}
 
 	client := http.Client{}
+
+	if f.Config.Timeout > 0 {
+		client.Timeout = f.Config.Timeout
+	}
 
 	response := &Response{}
 	resp, err := client.Do(req)
