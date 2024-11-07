@@ -8,6 +8,7 @@ import (
 type Fetch struct {
 	Config   *Config
 	Response Response
+	cookies  []*http.Cookie
 }
 
 func Create(config *Config) *Fetch {
@@ -71,6 +72,10 @@ func (f *Fetch) do(method string, uri string, input io.Reader) *Response {
 	if err != nil {
 		response.Error = err
 		return response
+	}
+
+	if resp.Cookies() != nil && f.Config.WithCredentials {
+		f.cookies = resp.Cookies()
 	}
 
 	response.Status = resp.StatusCode

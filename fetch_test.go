@@ -75,3 +75,16 @@ func Test_Timeout(t *testing.T) {
 	fmt.Println(resp)
 	require.NotNil(t, resp.Error)
 }
+
+func Test_Cookies(t *testing.T) {
+	instance := fetch.Create(&fetch.Config{
+		BaseUrl:         "https://google.com",
+		WithCredentials: true,
+	})
+	resp := instance.Get("")
+	require.Nil(t, resp.Error)
+
+	req, err := instance.GetConfig("GET", "", nil)
+	require.Nil(t, err)
+	require.NotEmpty(t, req.Cookies())
+}
