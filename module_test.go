@@ -23,13 +23,11 @@ func Test_AppModule(t *testing.T) {
 			}
 
 			type Posts []Post
-			res, err := httpFetch.Schema(&Posts{}).Get("posts")
-			if err != nil {
-				return err
-			}
+			var data Posts
+			res := httpFetch.Get("posts").Format(&data)
 
-			return ctx.JSON(core.Map{
-				"data": res.Data,
+			return ctx.Status(res.Status).JSON(core.Map{
+				"data": data,
 			})
 		})
 

@@ -1,6 +1,7 @@
 package fetch_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -20,59 +21,48 @@ func Test_Get(t *testing.T) {
 		Body   string `json:"body"`
 	}
 
-	type Posts []Post
-	res, err := instance.Schema(&Posts{}).Get("posts")
-	require.Nil(t, err)
+	res := instance.Get("posts")
+	require.Nil(t, res.Error)
 	require.Equal(t, 200, res.Status)
 
-	type Comment struct {
-		PostID int    `json:"postId"`
-		ID     int    `json:"id"`
-		Name   string `json:"name"`
-		Email  string `json:"email"`
-		Body   string `json:"body"`
-	}
-	type Comments []Comment
 	type QueryComment struct {
 		PostID int `query:"postId"`
 	}
-	res, err = instance.Schema(&Comments{}).Get("comments", &QueryComment{
+
+	res = instance.Post("posts", &Post{
+		UserID: 1,
+		Title:  "foo",
+		Body:   "bar",
+	}, &QueryComment{
 		PostID: 1,
 	})
-	require.Nil(t, err)
-	require.Equal(t, 200, res.Status)
-	data := res.Data.(*Comments)
-	if len(*data) > 0 {
-		first := (*data)[0]
-		require.Equal(t, 1, first.PostID)
-	}
-
-	res, err = instance.Post("posts", &Post{
-		UserID: 1,
-		Title:  "foo",
-		Body:   "bar",
-	})
-	require.Nil(t, err)
+	require.Nil(t, res.Error)
 	require.Equal(t, 201, res.Status)
 
-	res, err = instance.Put("posts/1", &Post{
+	res = instance.Put("posts/1", &Post{
 		UserID: 1,
 		Title:  "foo",
 		Body:   "bar",
+	}, &QueryComment{
+		PostID: 1,
 	})
-	require.Nil(t, err)
+	require.Nil(t, res.Error)
 	require.Equal(t, 200, res.Status)
 
-	res, err = instance.Patch("posts/1", &Post{
+	res = instance.Patch("posts/1", &Post{
 		UserID: 1,
 		Title:  "foo",
 		Body:   "bar",
+	}, &QueryComment{
+		PostID: 1,
 	})
-	require.Nil(t, err)
+	require.Nil(t, res.Error)
 	require.Equal(t, 200, res.Status)
 
-	res, err = instance.Delete("posts/1")
-	require.Nil(t, err)
+	res = instance.Delete("posts/1", &QueryComment{
+		PostID: 1,
+	})
+	require.Nil(t, res.Error)
 	require.Equal(t, 200, res.Status)
 }
 
@@ -81,7 +71,7 @@ func Test_Timeout(t *testing.T) {
 		BaseUrl: "https://jsonplaceholder.typicode.com",
 		Timeout: 10 * time.Millisecond,
 	})
-	resp, err := instance.Get("comments")
-	require.Nil(t, err)
+	resp := instance.Get("comments")
+	fmt.Println(resp)
 	require.NotNil(t, resp.Error)
 }
