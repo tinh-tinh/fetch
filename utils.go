@@ -10,6 +10,29 @@ import (
 	"strings"
 )
 
+// ParseQuery takes an interface{} argument and returns a string representing
+// the query string form of the argument. The argument can be a struct, a slice,
+// an array, a map, a pointer, or a primitive type. The function will recursively
+// traverse the argument and construct the query string accordingly.
+//
+// For structs, the function will extract the fields that have the "query" tag
+// and use the tag value as the key in the query string. The value of the field
+// will be converted to a string using the fmt package.
+//
+// For slices and arrays, the function will iterate over the elements and
+// construct the query string by concatenating the string representation of each
+// element with "&".
+//
+// For maps, the function will iterate over the key-value pairs and construct the
+// query string by concatenating the key-value pairs with "&".
+//
+// For pointers, the function will recursively call itself on the value that the
+// pointer points to.
+//
+// For primitive types, the function will use the fmt package to convert the
+// value to a string.
+//
+// If the argument is nil, the function will return an empty string.
 func ParseQuery(queryVal interface{}) string {
 	querystring := ""
 
@@ -72,6 +95,10 @@ func ParseQuery(queryVal interface{}) string {
 	return querystring
 }
 
+// ParseData serializes the given data into JSON format and returns an io.Reader
+// containing the JSON data. If the input data is nil, the function returns nil.
+// If the serialization fails, the function panics. The returned io.Reader can
+// be used to read the JSON data as a stream.
 func ParseData(data interface{}) io.Reader {
 	if data == nil {
 		return nil
@@ -83,6 +110,10 @@ func ParseData(data interface{}) io.Reader {
 	return strings.NewReader(string(buffer))
 }
 
+// IfSlashPrefixString trims a trailing slash from the string if present,
+// and ensures that the resulting string has a leading slash. If the input
+// string is empty, it returns the empty string. The function formats the
+// string using the ToFormat function before returning it.
 func IfSlashPrefixString(s string) string {
 	if s == "" {
 		return s

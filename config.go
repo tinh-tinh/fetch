@@ -26,6 +26,11 @@ type Config struct {
 	ResponseType string
 }
 
+// GetConfig returns a new *http.Request with the given method, uri and input.
+// The request will have the base url, headers, params and with credentials set
+// from the config. If the response type is json, the request will have the
+// content type set to application/json. If the request has cookies, they will be
+// added to the request.
 func (f *Fetch) GetConfig(method string, uri string, input io.Reader) (*http.Request, error) {
 	var formatUrl string
 	if f.Config != nil {
