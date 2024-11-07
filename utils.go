@@ -10,15 +10,37 @@ import (
 	"strings"
 )
 
-func ParseQuery(arrVal []interface{}) string {
+func ParseQuery(queryVal interface{}) string {
 	querystring := ""
-	for _, val := range arrVal {
-		if reflect.TypeOf(val).Kind() == reflect.Struct {
-			log.Fatalf("%v should be a value not struct", val)
-			continue
-		}
 
-		ct := reflect.ValueOf(val).Elem()
+	if queryVal == nil {
+		return querystring
+	}
+
+	kind := reflect.TypeOf(queryVal).Kind()
+	if kind == reflect.Struct {
+		log.Printf("%v should be a value not struct", queryVal)
+		return querystring
+	} else if kind == reflect.Slice || kind == reflect.Array {
+		arrVal := reflect.ValueOf(queryVal)
+		for i := 0; i < arrVal.Len(); i++ {
+			value := arrVal.Index(i).Interface()
+			if querystring != "" {
+				querystring += "&"
+			}
+			querystring += ParseQuery(value)
+		}
+	} else if kind == reflect.Map {
+		mapVal := reflect.ValueOf(queryVal)
+		for _, key := range mapVal.MapKeys() {
+			value := mapVal.MapIndex(key).Interface()
+			if querystring != "" {
+				querystring += "&"
+			}
+			querystring += fmt.Sprintf("%s=%s", key, ParseQuery(value))
+		}
+	} else if kind == reflect.Ptr {
+		ct := reflect.ValueOf(queryVal).Elem()
 		for i := 0; i < ct.NumField(); i++ {
 			field := ct.Type().Field(i)
 			tagVal := field.Tag.Get("query")
@@ -26,23 +48,24 @@ func ParseQuery(arrVal []interface{}) string {
 				continue
 			}
 
-			value := ct.Field(i).Interface()
-
-			switch v := value.(type) {
-			case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-				trans := strconv.Itoa(v.(int))
-				value = trans
-			case bool:
-				trans := strconv.FormatBool(v)
-				value = trans
-			}
-
+			value := ParseQuery(ct.Field(i).Interface())
 			if value != "" {
 				if querystring != "" {
 					querystring += "&"
 				}
 				querystring += fmt.Sprintf("%s=%s", tagVal, value)
 			}
+		}
+	} else {
+		switch v := queryVal.(type) {
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+			trans := strconv.Itoa(v.(int))
+			querystring = trans
+		case bool:
+			trans := strconv.FormatBool(v)
+			querystring = trans
+		case string:
+			querystring = v
 		}
 	}
 

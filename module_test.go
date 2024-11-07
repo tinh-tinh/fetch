@@ -1,6 +1,8 @@
 package fetch_test
 
 import (
+	"fmt"
+	"io"
 	"net/http/httptest"
 	"testing"
 
@@ -61,4 +63,7 @@ func Test_AppModule(t *testing.T) {
 	require.Nil(t, err)
 
 	require.Equal(t, 200, res.StatusCode)
+	data, err := io.ReadAll(res.Body)
+	require.Nil(t, err)
+	fmt.Println(string(data))
 }

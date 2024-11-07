@@ -33,6 +33,10 @@ func (f *Fetch) GetConfig(method string, uri string, input io.Reader) (*http.Req
 	}
 
 	formatUrl += IfSlashPrefixString(uri)
+	if len(f.Config.Params) > 0 {
+		formatUrl += "?" + ParseQuery(f.Config.Params)
+	}
+
 	fullUrl, err := url.ParseRequestURI(formatUrl)
 	if err != nil {
 		return nil, err

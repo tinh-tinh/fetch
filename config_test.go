@@ -13,6 +13,9 @@ func Test_Config(t *testing.T) {
 		BaseUrl:      "https://jsonplaceholder.typicode.com",
 		Headers:      http.Header{"x-api-key": []string{"abcd", "efgh"}},
 		ResponseType: "json",
+		Params: map[string]interface{}{
+			"foo": "bar",
+		},
 	})
 
 	req, err := instance.GetConfig("GET", "", nil)
