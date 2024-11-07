@@ -65,5 +65,11 @@ func (f *Fetch) GetConfig(method string, uri string, input io.Reader) (*http.Req
 		}
 	}
 
+	if f.Config.WithCredentials && f.cookies != nil {
+		for _, cookie := range f.cookies {
+			req.AddCookie(cookie)
+		}
+	}
+
 	return req, err
 }
