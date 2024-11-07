@@ -1,7 +1,9 @@
 package fetch
 
 import (
+	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -22,4 +24,42 @@ type Config struct {
 	WithCredentials bool
 	// ResponseType is the response type that will be used for the request
 	ResponseType string
+}
+
+func (f *Fetch) GetConfig(method string, uri string, input io.Reader) (*http.Request, error) {
+	var formatUrl string
+	if f.Config != nil {
+		formatUrl = f.Config.BaseUrl
+	}
+
+	formatUrl += IfSlashPrefixString(uri)
+	fullUrl, err := url.ParseRequestURI(formatUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	var req *http.Request
+	if input != nil {
+		req, err = http.NewRequest(method, fullUrl.String(), input)
+	} else {
+		req, err = http.NewRequest(method, fullUrl.String(), nil)
+	}
+
+	if f.Config.ResponseType == "json" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	if f.Config.Headers != nil {
+		for k, v := range f.Config.Headers {
+			for _, vv := range v {
+				if req.Header.Get(k) == "" {
+					req.Header.Set(k, vv)
+				} else {
+					req.Header.Add(k, vv)
+				}
+			}
+		}
+	}
+
+	return req, err
 }

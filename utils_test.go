@@ -29,7 +29,7 @@ func Test_parseQuery(t *testing.T) {
 	require.Equal(t, "name=Abc&age=13&fromDate=2024-01-01&toDate=2024-12-12&isAdmin=true", str)
 }
 
-func Test_PaseData(t *testing.T) {
+func Test_ParseData(t *testing.T) {
 	type DataDto struct {
 		Name string `json:"name,omitempty"`
 		Age  int    `json:"age"`
