@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tinh-tinh/fetch"
+	"github.com/tinh-tinh/fetch/v2"
 )
 
 func Test_Schema(t *testing.T) {

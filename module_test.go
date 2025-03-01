@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tinh-tinh/fetch"
-	"github.com/tinh-tinh/tinhtinh/core"
+	"github.com/tinh-tinh/fetch/v2"
+	"github.com/tinh-tinh/tinhtinh/v2/core"
 )
 
 func Test_AppModule(t *testing.T) {
-	controller := func(module *core.DynamicModule) *core.DynamicController {
+	controller := func(module core.Module) core.Controller {
 		ctrl := module.NewController("posts")
 		httpFetch := fetch.Inject(module)
 
@@ -36,14 +36,14 @@ func Test_AppModule(t *testing.T) {
 		return ctrl
 	}
 
-	module := func() *core.DynamicModule {
+	module := func() core.Module {
 		appModule := core.NewModule(core.NewModuleOptions{
-			Imports: []core.Module{
+			Imports: []core.Modules{
 				fetch.Register(&fetch.Config{
 					BaseUrl: "https://jsonplaceholder.typicode.com",
 				}),
 			},
-			Controllers: []core.Controller{
+			Controllers: []core.Controllers{
 				controller,
 			},
 		})
