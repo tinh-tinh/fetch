@@ -30,3 +30,20 @@ func Inject(module core.Module) *Fetch {
 	}
 	return fetch
 }
+
+type ConfigFactory func(ref core.RefProvider) *Config
+
+func RegisterFactory(fnc ConfigFactory) core.Modules {
+	return func(module core.Module) core.Module {
+		config := fnc(module)
+		fetchModule := module.New(core.NewModuleOptions{})
+
+		fetchModule.NewProvider(core.ProviderOptions{
+			Name:  FETCH,
+			Value: Create(config),
+		})
+		fetchModule.Export(FETCH)
+
+		return fetchModule
+	}
+}
