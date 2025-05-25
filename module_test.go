@@ -67,3 +67,21 @@ func Test_AppModule(t *testing.T) {
 	require.Nil(t, err)
 	fmt.Println(string(data))
 }
+
+func Test_Nil(t *testing.T) {
+	appModule := core.NewModule(core.NewModuleOptions{})
+	fetchModule := fetch.Inject(appModule)
+	require.Nil(t, fetchModule)
+}
+
+func Test_ModuleFactory(t *testing.T) {
+	appModule := core.NewModule(core.NewModuleOptions{
+		Imports: []core.Modules{
+			fetch.RegisterFactory(func(ref core.RefProvider) *fetch.Config {
+				return &fetch.Config{}
+			}),
+		},
+	})
+	fetchModule := fetch.Inject(appModule)
+	require.NotNil(t, fetchModule)
+}
