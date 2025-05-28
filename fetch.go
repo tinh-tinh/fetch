@@ -111,7 +111,7 @@ func (f *Fetch) Delete(url string, params ...interface{}) *Response {
 	if len(params) > 0 {
 		url += "?" + ParseQuery(params)
 	}
-	return f.do("GET", url, nil)
+	return f.do("DELETE", url, nil)
 }
 
 // do executes an HTTP request with the specified method, uri, and input,
