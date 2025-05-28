@@ -1,6 +1,7 @@
 package fetch
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -24,6 +25,8 @@ type Config struct {
 	WithCredentials bool
 	// ResponseType is the response type that will be used for the request
 	ResponseType string
+	// Cancel token
+	CancelToken context.Context
 }
 
 // GetConfig returns a new *http.Request with the given method, uri and input.
@@ -48,10 +51,15 @@ func (f *Fetch) GetConfig(method string, uri string, input io.Reader) (*http.Req
 	}
 
 	var req *http.Request
+	var formInput io.Reader = nil
 	if input != nil {
-		req, err = http.NewRequest(method, fullUrl.String(), input)
+		formInput = input
+	}
+
+	if f.Config.CancelToken != nil {
+		req, err = http.NewRequestWithContext(f.Config.CancelToken, method, fullUrl.String(), formInput)
 	} else {
-		req, err = http.NewRequest(method, fullUrl.String(), nil)
+		req, err = http.NewRequest(method, fullUrl.String(), formInput)
 	}
 
 	if f.Config.ResponseType == "json" {
