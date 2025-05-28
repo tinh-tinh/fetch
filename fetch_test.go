@@ -1,7 +1,6 @@
 package fetch_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -72,7 +71,6 @@ func Test_Timeout(t *testing.T) {
 		Timeout: 10 * time.Millisecond,
 	})
 	resp := instance.Get("comments")
-	fmt.Println(resp)
 	require.NotNil(t, resp.Error)
 }
 

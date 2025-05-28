@@ -3,6 +3,7 @@ package fetch_test
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -78,10 +79,17 @@ func Test_ModuleFactory(t *testing.T) {
 	appModule := core.NewModule(core.NewModuleOptions{
 		Imports: []core.Modules{
 			fetch.RegisterFactory(func(ref core.RefProvider) *fetch.Config {
-				return &fetch.Config{}
+				return &fetch.Config{
+					BaseUrl: "https://jsonplaceholder.typicode.com",
+					Headers: http.Header{"x-api-key": []string{"abcd"}},
+				}
 			}),
 		},
 	})
-	fetchModule := fetch.Inject(appModule)
-	require.NotNil(t, fetchModule)
+	fetchConfig := fetch.Inject(appModule)
+	require.NotNil(t, fetchConfig)
+
+	req, err := fetchConfig.GetConfig("GET", "", nil)
+	require.Nil(t, err)
+	require.Equal(t, "abcd", req.Header.Values("x-api-key")[0])
 }
