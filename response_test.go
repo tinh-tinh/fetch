@@ -27,6 +27,7 @@ func Test_Schema(t *testing.T) {
 	res := instance.Get("comments", &QueryComment{
 		PostID: 1,
 	}).Format(&comments)
+
 	require.Nil(t, res.Error)
 	require.Equal(t, 200, res.Status)
 	if len(comments) > 0 {

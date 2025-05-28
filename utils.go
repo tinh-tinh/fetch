@@ -1,13 +1,14 @@
 package fetch
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/tinh-tinh/tinhtinh/v2/core"
 )
 
 // ParseQuery takes an interface{} argument and returns a string representing
@@ -99,34 +100,13 @@ func ParseQuery(queryVal interface{}) string {
 // containing the JSON data. If the input data is nil, the function returns nil.
 // If the serialization fails, the function panics. The returned io.Reader can
 // be used to read the JSON data as a stream.
-func ParseData(data interface{}) io.Reader {
+func ParseData(data interface{}, encoder core.Encode) io.Reader {
 	if data == nil {
 		return nil
 	}
-	buffer, err := json.Marshal(data)
+	buffer, err := encoder(data)
 	if err != nil {
 		panic(err)
 	}
 	return strings.NewReader(string(buffer))
-}
-
-// IfSlashPrefixString trims a trailing slash from the string if present,
-// and ensures that the resulting string has a leading slash. If the input
-// string is empty, it returns the empty string. The function formats the
-// string using the ToFormat function before returning it.
-func IfSlashPrefixString(s string) string {
-	if s == "" {
-		return s
-	}
-	s = strings.TrimSuffix(s, "/")
-	if strings.HasPrefix(s, "/") {
-		return ToFormat(s)
-	}
-	return "/" + ToFormat(s)
-}
-
-// ToFormat takes a string and returns a formatted string. The string is
-// converted to lowercase and spaces are removed.
-func ToFormat(s string) string {
-	return strings.ReplaceAll(s, " ", "")
 }

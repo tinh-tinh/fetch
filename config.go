@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/tinh-tinh/tinhtinh/v2/core"
 )
 
 type Config struct {
@@ -27,6 +29,10 @@ type Config struct {
 	ResponseType string
 	// Cancel token
 	CancelToken context.Context
+	// Encoder
+	Encoder core.Encode
+	// Decoder
+	Decoder core.Decode
 }
 
 // GetConfig returns a new *http.Request with the given method, uri and input.
@@ -40,7 +46,7 @@ func (f *Fetch) GetConfig(method string, uri string, input io.Reader) (*http.Req
 		formatUrl = f.Config.BaseUrl
 	}
 
-	formatUrl += IfSlashPrefixString(uri)
+	formatUrl += core.IfSlashPrefixString(uri)
 	if len(f.Config.Params) > 0 {
 		formatUrl += "?" + ParseQuery(f.Config.Params)
 	}

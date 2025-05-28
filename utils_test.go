@@ -1,6 +1,7 @@
 package fetch_test
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -78,10 +79,10 @@ func Test_ParseData(t *testing.T) {
 		Age:  13,
 	}
 
-	str := fetch.ParseData(data)
+	str := fetch.ParseData(data, json.Marshal)
 	reader := strings.NewReader("{\"name\":\"Abc\",\"age\":13}")
 	require.Equal(t, reader, str)
 
-	null := fetch.ParseData(nil)
+	null := fetch.ParseData(nil, json.Marshal)
 	require.Nil(t, null)
 }
