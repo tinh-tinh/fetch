@@ -1,6 +1,7 @@
 package fetch
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 )
@@ -15,6 +16,12 @@ type Fetch struct {
 // The configuration includes details like BaseUrl, Headers, Params, and more,
 // which are used to customize HTTP requests made by the Fetch instance.
 func Create(config *Config) *Fetch {
+	if config.Encoder == nil {
+		config.Encoder = json.Marshal
+	}
+	if config.Decoder == nil {
+		config.Decoder = json.Unmarshal
+	}
 	return &Fetch{
 		Config: config,
 	}
@@ -51,7 +58,7 @@ func (f *Fetch) Post(url string, data interface{}, params ...interface{}) *Respo
 		url += "?" + ParseQuery(params)
 	}
 
-	return f.do("POST", url, ParseData(data))
+	return f.do("POST", url, ParseData(data, f.Config.Encoder))
 }
 
 // Patch makes a PATCH request to the specified URL and returns a Response
@@ -70,7 +77,7 @@ func (f *Fetch) Patch(url string, data interface{}, params ...interface{}) *Resp
 		url += "?" + ParseQuery(params)
 	}
 
-	return f.do("PATCH", url, ParseData(data))
+	return f.do("PATCH", url, ParseData(data, f.Config.Encoder))
 }
 
 // Put makes a PUT request to the specified URL and returns a Response
@@ -89,7 +96,7 @@ func (f *Fetch) Put(url string, data interface{}, params ...interface{}) *Respon
 		url += "?" + ParseQuery(params)
 	}
 
-	return f.do("PUT", url, ParseData(data))
+	return f.do("PUT", url, ParseData(data, f.Config.Encoder))
 }
 
 // Delete makes a DELETE request to the specified URL and returns a Response
@@ -133,7 +140,9 @@ func (f *Fetch) do(method string, uri string, input io.Reader) *Response {
 		client.Timeout = f.Config.Timeout
 	}
 
-	response := &Response{}
+	response := &Response{
+		decoder: f.Config.Decoder,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		response.Error = err
