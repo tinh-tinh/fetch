@@ -47,3 +47,51 @@ func RegisterFactory(fnc ConfigFactory) core.Modules {
 		return fetchModule
 	}
 }
+
+type MConfig struct {
+	Name   string
+	Config Config
+}
+
+func RegisterMulti(mconfigs ...MConfig) core.Modules {
+	return func(module core.Module) core.Module {
+		fetchModule := module.New(core.NewModuleOptions{})
+
+		for _, cfg := range mconfigs {
+			fetchModule.NewProvider(core.ProviderOptions{
+				Name:  core.Provide(cfg.Name),
+				Value: Create(&cfg.Config),
+			})
+			fetchModule.Export(core.Provide(cfg.Name))
+		}
+
+		return fetchModule
+	}
+}
+
+type MConfigFactory func(ref core.RefProvider) []MConfig
+
+func RegisterMultiFactory(factory MConfigFactory) core.Modules {
+	return func(module core.Module) core.Module {
+		fetchModule := module.New(core.NewModuleOptions{})
+
+		mconfigs := factory(module)
+		for _, cfg := range mconfigs {
+			fetchModule.NewProvider(core.ProviderOptions{
+				Name:  core.Provide(cfg.Name),
+				Value: Create(&cfg.Config),
+			})
+			fetchModule.Export(core.Provide(cfg.Name))
+		}
+
+		return fetchModule
+	}
+}
+
+func InjectByName(module core.RefProvider, name string) *Fetch {
+	fetch, ok := module.Ref(core.Provide(name)).(*Fetch)
+	if !ok {
+		return nil
+	}
+	return fetch
+}

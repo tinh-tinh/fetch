@@ -93,3 +93,65 @@ func Test_ModuleFactory(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, "abcd", req.Header.Values("x-api-key")[0])
 }
+
+func TestMultiConfig(t *testing.T) {
+	appModule := core.NewModule(core.NewModuleOptions{
+		Imports: []core.Modules{
+			fetch.RegisterMulti(fetch.MConfig{
+				Name: "jsonplaceholder",
+				Config: fetch.Config{
+					BaseUrl: "https://jsonplaceholder.typicode.com",
+					Headers: http.Header{"x-api-key": []string{"abcd"}},
+				},
+			}),
+		},
+	})
+	fetchConfig := fetch.InjectByName(appModule, "jsonplaceholder")
+	require.NotNil(t, fetchConfig)
+
+	req, err := fetchConfig.GetConfig("GET", "", nil)
+	require.Nil(t, err)
+	require.Equal(t, "abcd", req.Header.Values("x-api-key")[0])
+}
+
+func TestMultiConfigFactory(t *testing.T) {
+	appModule := core.NewModule(core.NewModuleOptions{
+		Imports: []core.Modules{
+			fetch.RegisterMultiFactory(func(ref core.RefProvider) []fetch.MConfig {
+				return []fetch.MConfig{
+					{
+						Name: "jsonplaceholder",
+						Config: fetch.Config{
+							BaseUrl: "https://jsonplaceholder.typicode.com",
+							Headers: http.Header{"x-api-key": []string{"abcd"}},
+						},
+					},
+					{
+						Name: "jsonplaceholder2",
+						Config: fetch.Config{
+							BaseUrl: "https://jsonplaceholder.typicode.com",
+							Headers: http.Header{"x-api-key": []string{"xyz"}},
+						},
+					},
+				}
+			}),
+		},
+	})
+	fetchConfig := fetch.InjectByName(appModule, "jsonplaceholder")
+	require.NotNil(t, fetchConfig)
+
+	req, err := fetchConfig.GetConfig("GET", "", nil)
+	require.Nil(t, err)
+	require.Equal(t, "abcd", req.Header.Values("x-api-key")[0])
+
+	fetchConfig2 := fetch.InjectByName(appModule, "jsonplaceholder2")
+	require.NotNil(t, fetchConfig2)
+
+	req, err = fetchConfig2.GetConfig("GET", "", nil)
+	require.Nil(t, err)
+	require.Equal(t, "xyz", req.Header.Values("x-api-key")[0])
+
+	fetchConfig3 := fetch.InjectByName(appModule, "jsonplaceholder3")
+	require.Nil(t, fetchConfig3)
+
+}
