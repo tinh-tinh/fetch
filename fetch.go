@@ -44,7 +44,7 @@ func Create(config *Config) *Fetch {
 //
 // The Response object returned by this function can be used to access
 // the status code and body of the HTTP response.
-func (f *Fetch) Get(url string, params ...interface{}) *Response {
+func (f *Fetch) Get(url string, params ...any) *Response {
 	if len(params) > 0 {
 		url += "?" + ParseQuery(params)
 	}
@@ -138,9 +138,7 @@ func (f *Fetch) Delete(url string, params ...interface{}) *Response {
 // If an error occurs during the request or while reading the response body,
 // the error is stored in the Response object.
 func (f *Fetch) do(method string, uri string, input io.Reader) *Response {
-	response := &Response{
-		decoder: f.Config.Decoder,
-	}
+	response := &Response{}
 
 	req, err := f.GetConfig(method, uri, input)
 	if err != nil {
@@ -180,6 +178,7 @@ func (f *Fetch) do(method string, uri string, input io.Reader) *Response {
 	}
 
 	response.Data = body
+	response.decoder = f.Config.Decoder
 	return response
 }
 
