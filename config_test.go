@@ -23,4 +23,9 @@ func Test_Config(t *testing.T) {
 	require.Equal(t, 2, len(req.Header.Values("x-api-key")))
 	require.Equal(t, "abcd", req.Header.Values("x-api-key")[0])
 	require.Equal(t, "efgh", req.Header.Values("x-api-key")[1])
+
+	instance2 := fetch.Create(&fetch.Config{})
+
+	resp := instance2.Get("")
+	require.NotNil(t, resp.Error)
 }

@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/sony/gobreaker/v2"
 )
 
 type Fetch struct {
 	Config   *Config
 	Response Response
 	cookies  []*http.Cookie
+	cb       *gobreaker.CircuitBreaker[*http.Response]
 }
 
 // Create initializes and returns a new Fetch instance with the provided configuration.
@@ -22,9 +25,15 @@ func Create(config *Config) *Fetch {
 	if config.Decoder == nil {
 		config.Decoder = json.Unmarshal
 	}
-	return &Fetch{
+
+	instance := &Fetch{
 		Config: config,
 	}
+	if config.CBSettings != nil {
+		cb := gobreaker.NewCircuitBreaker[*http.Response](*config.CBSettings)
+		instance.cb = cb
+	}
+	return instance
 }
 
 // Get makes a GET request to the specified URL and returns a Response
@@ -129,25 +138,34 @@ func (f *Fetch) Delete(url string, params ...interface{}) *Response {
 // If an error occurs during the request or while reading the response body,
 // the error is stored in the Response object.
 func (f *Fetch) do(method string, uri string, input io.Reader) *Response {
-	req, err := f.GetConfig(method, uri, input)
-	if err != nil {
-		panic(err)
-	}
-
-	client := http.Client{}
-
-	if f.Config.Timeout > 0 {
-		client.Timeout = f.Config.Timeout
-	}
-
 	response := &Response{
 		decoder: f.Config.Decoder,
 	}
-	resp, err := client.Do(req)
+
+	req, err := f.GetConfig(method, uri, input)
 	if err != nil {
 		response.Error = err
 		return response
 	}
+
+	var resp *http.Response
+	if f.cb != nil {
+		resp, err = f.cb.Execute(func() (*http.Response, error) {
+			r, err := f.call(req)
+			if err != nil {
+				return nil, err
+			}
+			return r, nil
+		})
+	} else {
+		resp, err = f.call(req)
+	}
+
+	if err != nil {
+		response.Error = err
+		return response
+	}
+	defer resp.Body.Close()
 
 	if resp.Cookies() != nil && f.Config.WithCredentials {
 		f.cookies = resp.Cookies()
@@ -163,4 +181,14 @@ func (f *Fetch) do(method string, uri string, input io.Reader) *Response {
 
 	response.Data = body
 	return response
+}
+
+func (f *Fetch) call(req *http.Request) (*http.Response, error) {
+	client := http.Client{}
+
+	if f.Config.Timeout > 0 {
+		client.Timeout = f.Config.Timeout
+	}
+
+	return client.Do(req)
 }
