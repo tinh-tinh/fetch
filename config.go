@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/sony/gobreaker/v2"
 	"github.com/tinh-tinh/tinhtinh/v2/core"
 )
 
@@ -33,6 +34,8 @@ type Config struct {
 	Encoder core.Encode
 	// Decoder
 	Decoder core.Decode
+	// Circuit Breaker settings
+	CBSettings *gobreaker.Settings
 }
 
 // GetConfig returns a new *http.Request with the given method, uri and input.

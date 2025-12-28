@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sony/gobreaker/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/tinh-tinh/fetch/v2"
 )
@@ -85,4 +86,42 @@ func Test_Cookies(t *testing.T) {
 	req, err := instance.GetConfig("GET", "", nil)
 	require.Nil(t, err)
 	require.NotEmpty(t, req.Cookies())
+}
+
+func Test_CircuitBreaker(t *testing.T) {
+	instance := fetch.Create(&fetch.Config{
+		BaseUrl: "https://jsonplaceholder.com",
+		CBSettings: &gobreaker.Settings{
+			Name: "CB",
+			ReadyToTrip: func(counts gobreaker.Counts) bool {
+				failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+				return counts.Requests >= 3 && failureRatio >= 0.6
+			},
+		},
+		Timeout: 5 * time.Second,
+	})
+
+	var resp *fetch.Response
+	// Intentionally cause failures
+	for range 5 {
+		resp = instance.Get("abc")
+	}
+	require.NotNil(t, resp.Error)
+	require.Equal(t, resp.Error, gobreaker.ErrOpenState)
+
+	instance2 := fetch.Create(&fetch.Config{
+		BaseUrl: "https://jsonplaceholder.typicode.com",
+		CBSettings: &gobreaker.Settings{
+			Name: "CB2",
+			ReadyToTrip: func(counts gobreaker.Counts) bool {
+				failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+				return counts.Requests >= 3 && failureRatio >= 0.6
+			},
+		},
+		Timeout: 5 * time.Second,
+	})
+
+	resp = instance2.Get("posts")
+	require.Nil(t, resp.Error)
+	require.Equal(t, 200, resp.Status)
 }

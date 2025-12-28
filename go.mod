@@ -3,8 +3,9 @@ module github.com/tinh-tinh/fetch/v2
 go 1.22.0
 
 require (
+	github.com/sony/gobreaker/v2 v2.3.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tinh-tinh/tinhtinh/v2 v2.3.2
+	github.com/tinh-tinh/tinhtinh/v2 v2.4.0
 )
 
 require (
